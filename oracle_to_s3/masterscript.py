@@ -31,14 +31,14 @@ def call_python_script(script_path, args):
 
 scripts_to_call = ['customers.py','products.py','employees.py','offices.py','orderdetails.py','orders.py','payments.py','productlines.py']
 
-# Replace 'arg1', 'arg2', etc., with the actual arguments you want to pass to the scripts
+
 common_arguments = [str(etl_batch_date)]
 
-# Define a function to be executed in parallel
+
 def run_script(script):
     call_python_script(script, common_arguments)
 
 if __name__ == '__main__':
-    # Use ThreadPoolExecutor for parallel execution on Windows
+    
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(run_script, scripts_to_call)
