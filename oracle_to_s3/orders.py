@@ -6,6 +6,7 @@ from io import StringIO
 
 ETL_BATCH_DATE = sys.argv[1]
 
+
 sql_query = f"""SELECT ORDERNUMBER,ORDERDATE,REQUIREDDATE,SHIPPEDDATE,STATUS,CUSTOMERNUMBER,create_timestamp,update_timestamp,cancelleddate 
                 from orders@f23kusumasri_dblink_classicmodels 
                 where to_char(update_timestamp,'YYYY-MM-DD')>='${ETL_BATCH_DATE}'"""

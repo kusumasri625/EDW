@@ -1,5 +1,11 @@
 import psycopg2
+import sys
+sys.path.append('C:/Users/kusumasri.muddasani/Desktop/ETL/EDW')
+from etlbatch import etl_batch
 
+
+etl_batch_no = etl_batch()[0]
+etl_batch_date = etl_batch()[1]
 # Redshift credentials
 redshift_host = "default-workgroup.834787109995.us-east-1.redshift-serverless.amazonaws.com"
 redshift_port = "5439"
@@ -8,7 +14,7 @@ redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
 
-def connect_to_redshift(host, port, database, user, password):
+def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_batch_date):
     try:
         # Create a connection to Redshift
         connection = psycopg2.connect(
@@ -86,5 +92,7 @@ connect_to_redshift(
     redshift_port,
     redshift_database,
     redshift_user,
-    redshift_password
+    redshift_password,
+    etl_batch_no,
+    etl_batch_date
 )
