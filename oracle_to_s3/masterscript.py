@@ -3,7 +3,7 @@ import sys
 import subprocess
 import os
 import oracledb
-sys.path.append('C:/Users/kusumasri.muddasani/Desktop/ETLPython/EDW')
+sys.path.append('C:/Users/kusumasri.muddasani/Desktop/ETL/EDW')
 from etlbatch import etl_batch
 
 
