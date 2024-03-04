@@ -6,10 +6,12 @@ import oracledb
 sys.path.append('C:/Users/kusumasri.muddasani/Desktop/ETLPython/EDW')
 from etlbatch import etl_batch
 
-schema_name = 'cm_20050609'
-identified = 'cm_20050609123'
-etl_batch_date = etl_batch()
-# print(etl_batch_date)
+
+etl_batch_no = etl_batch()[0]
+etl_batch_date = etl_batch()[1]
+schema_name = etl_batch()[2]
+identified = etl_batch()[3]
+
 
 def connection(schema_name,identified):
     connection = oracledb.connect('tpc1gb/tpc1gb@3.234.208.164:1521/XE')

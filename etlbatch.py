@@ -3,6 +3,8 @@ from io import StringIO
 
 etl_batch_no=1001
 etl_batch_date='2001-01-01'
+schema_name = 'cm_20050609'
+identified = 'cm_20050609123'
 
 def etl_batch():
     connection = psycopg2.connect(
@@ -17,13 +19,20 @@ def etl_batch():
     query1 = f'update dev.etl_metadata.batch_control set etl_batch_no={etl_batch_no}, etl_batch_date=\'{etl_batch_date}\';'
     cursor.execute(query1)
 
-    query= f'select etl_batch_date from dev.etl_metadata.batch_control;'
+    query= f'select * from dev.etl_metadata.batch_control;'
     cursor.execute(query)
     result=cursor.fetchone()
 
+    date_string=[]
+    date_string.append(result[0])
     # Extract the date string
-    date_string = result[0].strftime('%Y-%m-%d') if result and result[0] else None
-
+    s = result[1].strftime('%Y-%m-%d') if result and result[1] else None
+    date_string.append(s)
+    
+    date_string.append(schema_name)
+    
+    date_string.append(identified)
+    
     connection.commit()
 
     cursor.close()
