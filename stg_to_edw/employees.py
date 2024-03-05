@@ -14,7 +14,7 @@ redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
 
-def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_batch_date):
+def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BATCH_DATE):
     try:
         # Create a connection to Redshift
         connection = psycopg2.connect(
@@ -26,7 +26,7 @@ def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_ba
         )
         cursor = connection.cursor()
 
-        copy_command= ('''INSERT INTO dev_edw.employees
+        copy_command= (f'''INSERT INTO dev_edw.employees
 (employeeNumber            ,
    lastName               ,
    firstName              ,
@@ -50,36 +50,38 @@ SELECT
 , e.OFFICECODE
 , e.REPORTSTO
 , e.JOBTITLE
-, o.officecode
+, CAST(o.officecode AS INTEGER)
 , e.create_timestamp
 , e.update_timestamp
-,'${ETL_BATCH_NO}'
-,'${ETL_BATCH_DATE}'
+,'{ETL_BATCH_NO}'
+,'{ETL_BATCH_DATE}'
 FROM dev_stg.employees e left join dev_edw.employees e1 on e.employeeNumber=e1.employeeNumber
  inner join dev_edw.offices o on e.officecode=o.officecode
 where e1.employeeNumber is null;
 
 
 
-UPDATE f23kusumasri_devdw.employees a,f23kusumasri_devdw.employees b
-SET a.dw_reporting_employee_id=b.dw_employee_id
+UPDATE dev_edw.employees a
+SET dw_reporting_employee_id=b.dw_employee_id
+from dev_edw.employees b
 where a.reportsTo=b.employeeNumber;
 
 
-UPDATE f23kusumasri_devdw.employees a,f23kusumasri_devstage.employees b
+UPDATE dev_edw.employees a
 SET 
-a.employeeNumber            =b.EMPLOYEENUMBER,
-   a.lastName               =b.LASTNAME,
-   a.firstName              =b.FIRSTNAME,
-   a.extension              =b.EXTENSION,
-   a.email                  =b.EMAIL,
-   a.officeCode             =b.OFFICECODE,
-   a.reportsTo              =b.REPORTSTO,
-   a.jobTitle               =b.JOBTITLE,
-   a.src_update_timestamp   =b.update_timestamp,
-   a.dw_update_timestamp    =CURRENT_TIMESTAMP,
-   a.etl_batch_no           ='${ETL_BATCH_NO}',
-   a.etl_batch_date         = '${ETL_BATCH_DATE}'
+employeeNumber            =b.EMPLOYEENUMBER,
+   lastName               =b.LASTNAME,
+   firstName              =b.FIRSTNAME,
+   extension              =b.EXTENSION,
+   email                  =b.EMAIL,
+   officeCode             =b.OFFICECODE,
+   reportsTo              =b.REPORTSTO,
+   jobTitle               =b.JOBTITLE,
+   src_update_timestamp   =b.update_timestamp,
+   dw_update_timestamp    =CURRENT_TIMESTAMP,
+   etl_batch_no           ='{ETL_BATCH_NO}',
+   etl_batch_date         = '{ETL_BATCH_DATE}'
+   from dev_stg.employees b
 where a.employeeNumber =b.employeeNumber;
 
 ''')
@@ -88,10 +90,10 @@ where a.employeeNumber =b.employeeNumber;
 
         connection.commit()
 
-        print(f"Data uploaded to Redshift table")
+        print(f"Data uploaded to Redshift table employees")
 
     except Exception as e:
-        print(f"Error uploading to Redshift: {e}")
+        print(f"Error uploading to Redshift: {e} employees")
 
     finally:
         # Close the cursor and connection

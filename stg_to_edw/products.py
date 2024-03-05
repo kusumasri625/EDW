@@ -14,7 +14,7 @@ redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
 
-def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_batch_date):
+def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BATCH_DATE):
     try:
         # Create a connection to Redshift
         connection = psycopg2.connect(
@@ -26,19 +26,20 @@ def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_ba
         )
         cursor = connection.cursor()
 
-        copy_command= ('''update dev_edw.products a,dev_stg.products b
+        copy_command= (f'''update dev_edw.products a
 set
- a.productName         =b.productname,
-   a.productLine           =b.productline,
-   a.productScale          =b.productscale,
-   a.productVendor         =b.productvendor,
-   a.quantityInStock       =b.quantityinstock,
-   a.buyPrice              =b.buyprice,
-   a.MSRP                  =b.msrp,
-   a.src_update_timestamp  =b.update_timestamp,
-   a.dw_update_timestamp   =current_timestamp,
-   a.etl_batch_no          ='${ETL_BATCH_NO}',
-   a.etl_batch_date        ='${ETL_BATCH_DATE}'
+ productName         =b.productname,
+   productLine           =b.productline,
+   productScale          =b.productscale,
+   productVendor         =b.productvendor,
+   quantityInStock       =b.quantityinstock,
+   buyPrice              =b.buyprice,
+   MSRP                  =b.msrp,
+   src_update_timestamp  =b.update_timestamp,
+   dw_update_timestamp   =current_timestamp,
+   etl_batch_no          ='{ETL_BATCH_NO}',
+   etl_batch_date        ='{ETL_BATCH_DATE}'
+   from dev_stg.products b
 where a.src_productcode=b.productcode ;
 
 
@@ -73,8 +74,8 @@ SELECT
 , pl.dw_product_line_id
 , p.create_timestamp
 , p.update_timestamp
-,'${ETL_BATCH_NO}'
-,'${ETL_BATCH_DATE}'
+,'{ETL_BATCH_NO}'
+,'{ETL_BATCH_DATE}'
 FROM dev_stg.products p left join dev_edw.products p1 on p.productCode=p1.src_productCode
 inner join dev_edw.productlines pl on p.productline=pl.productline
 where p1.src_productCode is null;
@@ -84,10 +85,10 @@ where p1.src_productCode is null;
 
         connection.commit()
 
-        print(f"Data uploaded to Redshift table")
+        print(f"Data uploaded to Redshift table products")
 
     except Exception as e:
-        print(f"Error uploading to Redshift: {e}")
+        print(f"Error uploading to Redshift products: {e}")
 
     finally:
         # Close the cursor and connection

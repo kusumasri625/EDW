@@ -14,7 +14,7 @@ redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
 
-def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_batch_date):
+def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BATCH_DATE):
     try:
         # Create a connection to Redshift
         connection = psycopg2.connect(
@@ -26,7 +26,7 @@ def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_ba
         )
         cursor = connection.cursor()
 
-        copy_command= ('''insert into dev_edw.orders
+        copy_command= (f'''insert into dev_edw.orders
 (
    dw_customer_id        ,
    src_orderNumber       ,
@@ -51,25 +51,26 @@ SELECT
 , o.CUSTOMERNUMBER
 , o.create_timestamp
 , o.update_timestamp
-,'${ETL_BATCH_NO}'
-,'${ETL_BATCH_DATE}'
+,'{ETL_BATCH_NO}'
+,'{ETL_BATCH_DATE}'
 , o.cancelleddate
 FROM dev_stg.orders o left join dev_edw.orders o1 on o.orderNumber=o1.src_orderNumber
 inner join dev_edw.customers c on o.customernumber=c.src_customernumber
 where o1.src_orderNumber is null;
 
-update dev_edw.orders a,dev_stg.orders b
+update dev_edw.orders a
 set 
-   a.orderDate=b.orderdate             ,
-   a.requiredDate=b.requireddate          ,
-   a.shippedDate=b.shippeddate           ,
-   a.status=b.status                             ,
-   a.src_customerNumber=b.customernumber    ,
-   a.src_update_timestamp=b.update_timestamp,
-   a.etl_batch_no ='${ETL_BATCH_NO}',
-   a.etl_batch_date='${ETL_BATCH_DATE}',
-   a.cancelleddate=b.cancelleddate,
-   a.dw_update_timestamp=CURRENT_TIMESTAMP
+   orderDate=b.orderdate             ,
+   requiredDate=b.requireddate          ,
+   shippedDate=b.shippeddate           ,
+   status=b.status                             ,
+   src_customerNumber=b.customernumber    ,
+   src_update_timestamp=b.update_timestamp,
+   etl_batch_no ='{ETL_BATCH_NO}',
+   etl_batch_date='{ETL_BATCH_DATE}',
+   cancelleddate=b.cancelleddate,
+   dw_update_timestamp=CURRENT_TIMESTAMP
+   from dev_stg.orders b
 where a.src_orderNumber=b.ordernumber;
 
 
@@ -79,10 +80,10 @@ where a.src_orderNumber=b.ordernumber;
 
         connection.commit()
 
-        print(f"Data uploaded to Redshift table")
+        print(f"Data uploaded to Redshift table orders")
 
     except Exception as e:
-        print(f"Error uploading to Redshift: {e}")
+        print(f"Error uploading to Redshift orders: {e}")
 
     finally:
         # Close the cursor and connection

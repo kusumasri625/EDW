@@ -14,7 +14,7 @@ redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
 
-def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_batch_date):
+def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BATCH_DATE):
     try:
         # Create a connection to Redshift
         connection = psycopg2.connect(
@@ -26,13 +26,14 @@ def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_ba
         )
         cursor = connection.cursor()
 
-        copy_command= ('''update dev_edw.productlines a,dev_stg.productlines b
+        copy_command= (f'''update dev_edw.productlines a
 set
-a.productLine            =b.productline,
-   a.src_update_timestamp=b.update_timestamp,
-   a.dw_update_timestamp =CURRENT_TIMESTAMP,
-   a.etl_batch_no        ='${ETL_BATCH_NO}',
-   a. etl_batch_date     ='${ETL_BATCH_DATE}'
+productLine            =b.productline,
+   src_update_timestamp=b.update_timestamp,
+   dw_update_timestamp =CURRENT_TIMESTAMP,
+   etl_batch_no        ='{ETL_BATCH_NO}',
+   etl_batch_date     ='{ETL_BATCH_DATE}'
+   from dev_stg.productlines b
 where a.productline=b.productline;
 
 
@@ -48,8 +49,8 @@ SELECT
   p.PRODUCTLINE
 , p.create_timestamp
 , p.update_timestamp
-,'${ETL_BATCH_NO}'
-,'${ETL_BATCH_DATE}'
+,'{ETL_BATCH_NO}'
+,'{ETL_BATCH_DATE}'
 FROM dev_stg.productlines p left join dev_edw.productlines p1 on p.productLine=p1.productLine
 where p1.productLine is null;''')
 
@@ -57,10 +58,10 @@ where p1.productLine is null;''')
 
         connection.commit()
 
-        print(f"Data uploaded to Redshift table")
+        print(f"Data uploaded to Redshift table productlines")
 
     except Exception as e:
-        print(f"Error uploading to Redshift: {e}")
+        print(f"Error uploading to Redshift productlines: {e}")
 
     finally:
         # Close the cursor and connection

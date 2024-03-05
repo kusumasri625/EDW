@@ -14,7 +14,7 @@ redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
 
-def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_batch_date):
+def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BATCH_DATE):
     try:
         # Create a connection to Redshift
         connection = psycopg2.connect(
@@ -26,7 +26,7 @@ def connect_to_redshift(host, port, database, user, password,etl_batch_no,etl_ba
         )
         cursor = connection.cursor()
 
-        copy_command= ('''INSERT INTO dev_edw.offices
+        copy_command= (f'''INSERT INTO dev_edw.offices
 ( officeCode,
    city,
    phone,
@@ -53,37 +53,38 @@ SELECT
 , A.TERRITORY
 , A.create_timestamp
 , A.update_timestamp
-, '${ETL_BATCH_NO}'
-, '${ETL_BATCH_DATE}'
+, '{ETL_BATCH_NO}'
+, '{ETL_BATCH_DATE}'
 FROM dev_stg.offices A left join dev_edw.offices B ON A.officeCode=B.officeCode
 where B.officeCode IS NULL;
 
 
-UPDATE dev_edw.offices a,dev_stg.offices b
+UPDATE dev_edw.offices a
 set
-a.officeCode               =b.OFFICECODE,
-   a.city                  =b.CITY,
-   a.phone                 =b.PHONE,
-   a.addressLine1          =b.ADDRESSLINE1,
-   a.addressLine2          =b.ADDRESSLINE2,
-   a.state                 =b.STATE,
-   a.country               =b.COUNTRY,
-   a.postalCode            =b.POSTALCODE,
-   a.territory             =b.TERRITORY,
-   a.src_update_timestamp  =b.update_timestamp,
-   a.dw_update_timestamp   =CURRENT_TIMESTAMP,
-   a.etl_batch_no          ='${ETL_BATCH_NO}',
-   a.etl_batch_date        ='${ETL_BATCH_DATE}'
+officeCode               =b.OFFICECODE,
+   city                  =b.CITY,
+   phone                 =b.PHONE,
+   addressLine1          =b.ADDRESSLINE1,
+   addressLine2          =b.ADDRESSLINE2,
+   state                 =b.STATE,
+   country               =b.COUNTRY,
+   postalCode            =b.POSTALCODE,
+   territory             =b.TERRITORY,
+   src_update_timestamp  =b.update_timestamp,
+   dw_update_timestamp   =CURRENT_TIMESTAMP,
+   etl_batch_no          ='{ETL_BATCH_NO}',
+   etl_batch_date        ='{ETL_BATCH_DATE}'
+   from dev_stg.offices b
 where a.officeCode =b.OFFICECODE ''')
 
         cursor.execute(copy_command)
 
         connection.commit()
 
-        print(f"Data uploaded to Redshift table")
+        print(f"Data uploaded to Redshift table offices")
 
     except Exception as e:
-        print(f"Error uploading to Redshift: {e}")
+        print(f"Error uploading to Redshift offices: {e}")
 
     finally:
         # Close the cursor and connection

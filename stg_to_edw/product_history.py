@@ -6,6 +6,7 @@ from etlbatch import etl_batch
 
 etl_batch_no = etl_batch()[0]
 etl_batch_date = etl_batch()[1]
+
 # Redshift credentials
 redshift_host = "default-workgroup.834787109995.us-east-1.redshift-serverless.amazonaws.com"
 redshift_port = "5439"
@@ -26,54 +27,42 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
         )
         cursor = connection.cursor()
 
-        copy_command= (f'''update dev_edw.payments a
-set
-checkNumber         =b.checknumber,
-   paymentDate         =b.paymentdate,
-   amount              =b.amount,
-   src_update_timestamp=b.update_timestamp,
-   dw_update_timestamp=current_timestamp,
-   etl_batch_no          ='{ETL_BATCH_NO}',
-   etl_batch_date        ='{ETL_BATCH_DATE}'
-   from dev_stg.payments b
-where a.checkNumber=b.checkNumber;
+        copy_command= (f'''UPDATE dev_edw.product_history c1
+set effective_to_date='{ETL_BATCH_DATE}',
+dw_active_record_ind=0,
+dw_update_timestamp= current_timestamp
+from dev_edw.products c
+WHERE c1.dw_product_id = c.dw_product_id 
+and c1.dw_active_record_ind=1 
+and c1.msrp <> c.msrp;
 
-
-insert into dev_edw.payments
-(
- dw_customer_id        ,
-   src_customerNumber  ,
-   checkNumber         ,
-   paymentDate         ,
-   amount              ,
-   src_create_timestamp ,
-   src_update_timestamp,
-   etl_batch_no,
-   etl_batch_date 
+insert into dev_edw.product_history(
+dw_product_id,
+MSRP,
+effective_from_date,
+dw_active_record_ind,
+dw_create_timestamp,
+dw_update_timestamp
 )
-SELECT
-  c.dw_customer_id
-, p.CUSTOMERNUMBER
-, p.CHECKNUMBER
-, p.PAYMENTDATE
-, p.AMOUNT
-, p.create_timestamp
-, p.update_timestamp
-,'{ETL_BATCH_NO}'
-,'{ETL_BATCH_DATE}'
-FROM dev_stg.payments p left join dev_edw.payments p1 on p.checkNumber=p1.checkNumber
-inner join  dev_edw.customers c on c.src_customernumber=p.customernumber
-where p1.checkNumber is null;
+SELECT c.dw_product_id,
+c.MSRP,
+'{ETL_BATCH_DATE}'effective_from_date,
+1 dw_active_record_ind,
+current_timestamp,
+current_timestamp
+FROM dev_edw.products c LEFT JOIN dev_edw.product_history c1
+  ON c1.dw_product_id = c.dw_product_id and c1.dw_active_record_ind=1
+WHERE c1.dw_product_id IS NULL
 ''')
 
         cursor.execute(copy_command)
 
         connection.commit()
 
-        print(f"Data uploaded to Redshift table payments")
+        print(f"Data uploaded to Redshift table product_history")
 
     except Exception as e:
-        print(f"Error uploading to Redshift payments: {e}")
+        print(f"Error uploading to Redshift product_history: {e}")
 
     finally:
         # Close the cursor and connection
