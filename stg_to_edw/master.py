@@ -20,8 +20,8 @@ def call_python_script(script_path, args):
 
 
 scripts_to_call = ['offices.py','employees.py','customers.py','payments.py','orders.py'
-                   ,'productlines.py','products.py','orderdetails.py','customer_history.py','product_history.py'
-                   ,'daily_customer_summary','daily_product_summary','monthly_customer_summary','monthly_product_summary']
+                   ,'productlines.py','products.py','orderdetails.py','customer_history.py','product_history.py',
+                   'daily_customer_summary.py','daily_product_summary.py','monthly_customer_summary.py','monthly_product_summary.py']
 
 
 common_arguments = [str(etl_batch_date),str(etl_batch_no)]

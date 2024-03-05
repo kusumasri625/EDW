@@ -41,6 +41,6 @@ def run_script(script):
     call_python_script(script, common_arguments)
 
 if __name__ == '__main__':
-    
+    connection(schema_name,identified)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(run_script, scripts_to_call)

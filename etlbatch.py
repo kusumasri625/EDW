@@ -2,11 +2,13 @@ import psycopg2
 from io import StringIO
 import subprocess
 import os
+import sys
+sys.path.append('C:/Users/kusumasri.muddasani/Desktop/ETL/EDW')
 
-etl_batch_no=1001
-etl_batch_date='2001-01-01'
-schema_name = 'cm_20050609'
-identified = 'cm_20050609123'
+etl_batch_no=1006
+etl_batch_date='2005-06-14'
+schema_name = 'cm_20050614'
+identified = 'cm_20050614123'
 
 # Redshift credentials
 redshift_host = "default-workgroup.834787109995.us-east-1.redshift-serverless.amazonaws.com"
@@ -15,12 +17,7 @@ redshift_database = "dev"
 redshift_user = "admin"
 redshift_password = "BizAct#12345"
 
-script_dir = r"C:\\Users\\kusumasri.muddasani\\Desktop\\ETL\\EDW"
-scripts_to_call = [
-os.path.join(script_dir, "oracle_to_s3/masterscript.py"),
-os.path.join(script_dir, "src_to_stg/master.py"),
-os.path.join(script_dir, "stg_to_edw/master.py"),
-]
+
 def etl_batch():
     connection = psycopg2.connect(
     host="default-workgroup.834787109995.us-east-1.redshift-serverless.amazonaws.com",
@@ -125,6 +122,7 @@ def etl_log_update(host, port, database, user, password,etl_batch_no,etl_batch_d
 
 
 def call_python_script(script_path):
+    print(script_path)
     try:
         subprocess.run(["python", script_path], check=True)
     except subprocess.CalledProcessError as e:
@@ -137,12 +135,20 @@ if __name__ == '__main__':
     
     etl_log_insert(redshift_host, redshift_port, redshift_database, redshift_user, redshift_password,etl_batch_no,etl_batch_date)
 
-    # Run scripts sequentially
-    for script in scripts_to_call:
-        if os.path.exists(script):
-            call_python_script(script)
-        else:
-            print(f"Script not found: {script}")
+    script_sets = [
+    ('masterscript.py', 'oracle_to_s3'),
+    ('master.py', 'src_to_stg'),
+    ('master.py', 'stg_to_edw')
+    ]
 
-        
+    for script, script_directory in script_sets:
+        # Change the working directory to where the scripts are located
+        current_script_directory = os.path.dirname(os.path.realpath(__file__))
+        target_directory = os.path.join(current_script_directory, script_directory)
+        os.chdir(target_directory)
+
+        # Run scripts sequentially
+        script_path = os.path.join(target_directory, script)
+        call_python_script(script_path)
+
     etl_log_update(redshift_host, redshift_port, redshift_database, redshift_user, redshift_password,etl_batch_no,etl_batch_date)
