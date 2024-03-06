@@ -27,29 +27,19 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
         )
         cursor = connection.cursor()
 
-        copy_command= (f'''UPDATE dev_edw.customer_history ch
-   SET effective_to_date = '{ETL_BATCH_DATE}',
-       dw_active_record_ind = 0,
-       dw_update_timestamp = CURRENT_TIMESTAMP,
-       update_etl_batch_no ='{ETL_BATCH_NO}',
-       update_etl_batch_date='{ETL_BATCH_DATE}'
-       from dev_edw.customers c
-WHERE c.dw_customer_id = ch.dw_customer_id 
-AND ch.dw_active_record_ind = 1 
-and ch.creditlimit <> c.creditlimit;
-commit;''')
-
-        copy_command1=(f'''INSERT INTO dev_edw.customer_history(
-  dw_customer_id,
-  creditLimit,
-  effective_from_date,
-  dw_active_record_ind,
-  dw_create_timestamp,
-  dw_update_timestamp,
-  create_etl_batch_no,
-  create_etl_batch_date
-)
-SELECT a.dw_customer_id,
+        copy_command = f"""
+   INSERT INTO dev_edw.customer_history
+   (
+     dw_customer_id,
+     creditLimit,
+     effective_from_date,
+     dw_active_record_ind,
+     dw_create_timestamp,
+     dw_update_timestamp,
+     create_etl_batch_no,
+     create_etl_batch_date
+    )
+    SELECT a.dw_customer_id,
        a.creditlimit,
        '{ETL_BATCH_DATE}' effective_from_date,
        1 dw_active_record_ind,
@@ -57,13 +47,24 @@ SELECT a.dw_customer_id,
        CURRENT_TIMESTAMP,
        '{ETL_BATCH_NO}',
        '{ETL_BATCH_DATE}'
-FROM dev_edw.customers a
-  LEFT JOIN dev_edw.customer_history b
+    FROM dev_edw.customers a
+    LEFT JOIN dev_edw.customer_history b
          ON a.dw_customer_id = b.dw_customer_id
         AND b.dw_active_record_ind = 1
-WHERE b.dw_customer_id IS NULL;
-commit;
-''')
+    WHERE b.dw_customer_id IS NULL;
+"""
+        copy_command1 = f"""
+   UPDATE dev_edw.customer_history
+   SET effective_to_date = '{ETL_BATCH_DATE}',
+       dw_active_record_ind = 0,
+       dw_update_timestamp = CURRENT_TIMESTAMP,
+       update_etl_batch_no ='{ETL_BATCH_NO}',
+       update_etl_batch_date='{ETL_BATCH_DATE}'
+    from dev_edw.customer_history ch
+    INNER JOIN dev_edw.customers c ON c.dw_customer_id = ch.dw_customer_id
+      AND ch.dw_active_record_ind = 1
+     WHERE ch.creditlimit <> c.creditlimit;
+ """
 
         cursor.execute(copy_command)
         connection.commit()

@@ -27,31 +27,34 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
         )
         cursor = connection.cursor()
 
-        copy_command= (f'''
-DELETE FROM dev_edw.monthly_product_summary 
-WHERE start_of_the_month_date >= '{ETL_BATCH_DATE}'::date;''')
-
-        copy_command1=(f'''
-INSERT INTO dev_edw.monthly_product_summary 
-SELECT 
-    date_trunc('month', summary_date) AS start_of_the_date,
-    dw_product_id,
-    SUM(customer_apd) AS customer_apd,
-    CASE WHEN SUM(customer_apd) > 0 THEN 1 ELSE 0 END AS customer_apm,
-    SUM(product_cost_amount) AS product_cost_amount,
-    SUM(product_mrp_amount) AS product_mrp_amount,
-    SUM(cancelled_product_qty) AS cancelled_product_qty,
-    SUM(cancelled_cost_amount) AS cancelled_cost_amount,
-    SUM(cancelled_mrp_amount) AS cancelled_mrp_amount,
-    SUM(cancelled_order_apd) AS cancelled_order_apd,
-    CASE WHEN SUM(cancelled_order_apd) > 0 THEN 1 ELSE 0 END AS cancelled_order_apm,
-    CURRENT_TIMESTAMP AS dw_create_timestamp,
-    '{ETL_BATCH_NO}' AS etl_batch_no,
-    '{ETL_BATCH_DATE}' AS etl_batch_date 
-FROM dev_edw.daily_product_summary
-WHERE date_trunc('month', summary_date) >= '{ETL_BATCH_DATE}'::date
-GROUP BY date_trunc('month', summary_date), dw_product_id;
-''')
+        copy_command = f"""
+   DELETE FROM dev_edw.monthly_product_summary
+   WHERE start_of_the_month_date>=
+     date_trunc('month', '{ETL_BATCH_DATE}'::date);
+   """
+        copy_command1 = f"""
+   INSERT INTO dev_edw.monthly_product_summary
+    (SELECT date_trunc('month', summary_date::date) start_of_the_date,
+       dw_product_id,
+       SUM(customer_apd) customer_apd,
+       (CASE WHEN SUM(customer_apd) > 0 THEN 1 ELSE 0 END) customer_apm,
+       SUM(product_cost_amount) product_cost_amount,
+       SUM(product_mrp_amount) product_mrp_amount,
+       SUM(cancelled_product_qty) cancelled_product_qty,
+       SUM(cancelled_cost_amount) cancelled_cost_amount,
+       SUM(cancelled_mrp_amount) cancelled_mrp_amount,
+       SUM(cancelled_order_apd) cancelled_order_apd,
+       (CASE WHEN SUM(cancelled_order_apd) > 0 THEN 1 ELSE 0 END)
+       cancelled_order_apm,
+       current_timestamp dw_create_timestamp,
+       '{ETL_BATCH_NO}',
+       '{ETL_BATCH_DATE}'
+    FROM dev_edw.daily_product_summary
+    WHERE date_trunc('month', summary_date::date)>=
+      date_trunc('month', '{ETL_BATCH_DATE}'::date)
+    GROUP BY date_trunc('month', summary_date::date),
+         dw_product_id);
+    """
 
         cursor.execute(copy_command)
         connection.commit()

@@ -27,43 +27,48 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
         )
         cursor = connection.cursor()
 
-        copy_command= (f'''
-DELETE FROM dev_edw.monthly_customer_summary 
-WHERE start_of_the_month_date >= '{ETL_BATCH_DATE}'::date;''')
-
-        copy_command1=(f'''
-INSERT INTO dev_edw.monthly_customer_summary
-SELECT 
-    date_trunc('month', summary_date) AS start_of_the_month_date,
-    dw_customer_id,
-    SUM(order_count),
-    SUM(order_apd),
-    CASE WHEN SUM(order_apd) > 0 THEN 1 ELSE 0 END AS order_apm,
-    SUM(ordered_amount),
-    SUM(order_cost_amount),
-    SUM(order_mrp_amount),
-    SUM(cancelled_order_count),
-    SUM(cancelled_order_amount),
-    SUM(cancelled_order_apd),
-    CASE WHEN SUM(cancelled_order_apd) > 0 THEN 1 ELSE 0 END AS cancelled_order_apm,
-    SUM(shipped_order_count),
-    SUM(shipped_order_amount),
-    SUM(shipped_order_apd),
-    CASE WHEN SUM(shipped_order_apd) > 0 THEN 1 ELSE 0 END AS shipped_order_apm,
-    SUM(payment_apd),
-    CASE WHEN SUM(payment_apd) > 0 THEN 1 ELSE 0 END AS payment_apm,
-    SUM(payment_amount),
-    SUM(new_customer_apd),
-    CASE WHEN SUM(new_customer_apd) > 0 THEN 1 ELSE 0 END AS new_customer_apm,
-    SUM(new_customer_paid_apd),
-    CASE WHEN SUM(new_customer_paid_apd) > 0 THEN 1 ELSE 0 END AS new_customer_paid_apm,
-    current_timestamp AS dw_create_timestamp,
-    '{ETL_BATCH_NO}' AS etl_batch_no,
-    '{ETL_BATCH_DATE}'::date AS etl_batch_date
-FROM dev_edw.daily_customer_summary
-WHERE date_trunc('month', summary_date) >= date_trunc('month', '{ETL_BATCH_DATE}'::date)
-GROUP BY date_trunc('month', summary_date), dw_customer_id;
-''')
+        copy_command = f"""
+   DELETE FROM dev_edw.monthly_customer_summary
+   WHERE start_of_the_month_date >=
+     date_trunc('month', '{ETL_BATCH_DATE}'::date);
+   """
+        copy_command1 = f"""
+   INSERT INTO dev_edw.monthly_customer_summary
+    (SELECT date_trunc('month', summary_date::date) start_of_the_month_date,
+       dw_customer_id,
+       SUM(order_count),
+       SUM(order_apd),
+       (CASE WHEN SUM(order_apd) > 0 THEN 1 ELSE 0 END) order_apm,
+       SUM(ordered_amount),
+       SUM(order_cost_amount),
+       SUM(order_mrp_amount),
+       SUM(cancelled_order_count),
+       SUM(cancelled_order_amount),
+       SUM(cancelled_order_apd),
+       (CASE WHEN SUM(cancelled_order_apd) > 0 THEN 1 ELSE 0 END)
+         cancelled_order_apm,
+       SUM(shipped_order_count),
+       SUM(shipped_order_amount),
+       SUM(shipped_order_apd),
+       (CASE WHEN SUM(shipped_order_apd) > 0 THEN 1 ELSE 0 END)
+         shipped_order_apm,
+       SUM(payment_apd),
+       (CASE WHEN SUM(payment_apd) > 0 THEN 1 ELSE 0 END) payment_apm,
+       SUM(payment_amount),
+       SUM(new_customer_apd),
+       (CASE WHEN SUM(new_customer_apd) > 0 THEN 1 ELSE 0 END)
+         new_customer_apm,
+       SUM(new_customer_paid_apd),
+       (CASE WHEN SUM(new_customer_paid_apd) > 0 THEN 1 ELSE 0 END)
+         new_customer_paid_apm,
+        current_timestamp dw_create_timestamp,
+       '{ETL_BATCH_NO}',
+       '{ETL_BATCH_DATE}'
+    FROM dev_edw.daily_customer_summary
+    WHERE date_trunc('month', summary_date::date)>=
+      date_trunc('month', '{ETL_BATCH_DATE}'::date)
+    GROUP BY date_trunc('month', summary_date::date),
+         dw_customer_id);    """
 
         cursor.execute(copy_command)
         connection.commit()

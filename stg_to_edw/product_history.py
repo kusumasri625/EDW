@@ -27,34 +27,44 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
         )
         cursor = connection.cursor()
 
-        copy_command= (f'''UPDATE dev_edw.product_history c1
-set effective_to_date='{ETL_BATCH_DATE}',
-dw_active_record_ind=0,
-dw_update_timestamp= current_timestamp
-from dev_edw.products c
-WHERE c1.dw_product_id = c.dw_product_id 
-and c1.dw_active_record_ind=1 
-and c1.msrp <> c.msrp;''')
-
-        copy_command1=(f'''
-insert into dev_edw.product_history(
-dw_product_id,
-MSRP,
-effective_from_date,
-dw_active_record_ind,
-dw_create_timestamp,
-dw_update_timestamp
-)
-SELECT c.dw_product_id,
-c.MSRP,
-'{ETL_BATCH_DATE}'effective_from_date,
-1 dw_active_record_ind,
-current_timestamp,
-current_timestamp
-FROM dev_edw.products c LEFT JOIN dev_edw.product_history c1
-  ON c1.dw_product_id = c.dw_product_id and c1.dw_active_record_ind=1
-WHERE c1.dw_product_id IS NULL
-''')
+        copy_command = f"""
+   INSERT INTO dev_edw.product_history
+   (
+     dw_product_id,
+     MSRP,
+     effective_from_date,
+     dw_active_record_ind,
+     dw_create_timestamp,
+     dw_update_timestamp,
+     create_etl_batch_no,
+     create_etl_batch_date
+    )
+    SELECT a.dw_product_id,
+       a.MSRP,
+       '{ETL_BATCH_DATE}' effective_from_date,
+       1 dw_active_record_ind,
+       CURRENT_TIMESTAMP,
+       CURRENT_TIMESTAMP,
+       '{ETL_BATCH_NO}',
+       '{ETL_BATCH_DATE}'
+    FROM dev_edw.products a
+    LEFT JOIN dev_edw.product_history b
+         ON a.dw_product_id = b.dw_product_id
+         AND b.dw_active_record_ind = 1
+    WHERE b.dw_product_id IS NULL;
+"""
+        copy_command1 = f"""
+   UPDATE dev_edw.product_history
+   SET effective_to_date ='{ETL_BATCH_DATE}',
+       dw_active_record_ind = 0,
+       dw_update_timestamp = CURRENT_TIMESTAMP,
+       update_etl_batch_no ='{ETL_BATCH_NO}',
+       update_etl_batch_date='{ETL_BATCH_DATE}'
+  from dev_edw.products p inner join dev_edw.product_history
+    ph on ph.dw_product_id=p.dw_product_id
+  AND ph.dw_active_record_ind = 1
+   WHERE ph.MSRP <> p.MSRP;
+ """
 
         cursor.execute(copy_command)
         connection.commit()
