@@ -55,10 +55,10 @@ SELECT
 FROM dev_stg.orderdetails od left join dev_edw.orderdetails od1 on od.orderNumber=od1.src_orderNumber and od.productCode=od1.src_productCode 
 inner join dev_edw.orders o on o.src_ordernumber=od.ordernumber
 inner join dev_edw.products p on od.productcode=p.src_productcode
-where od1.src_orderNumber is null and od1.src_productCode is null;
+where od1.src_orderNumber is null and od1.src_productCode is null;''')
 
 
-
+        copy_command1=(f'''
 update dev_edw.orderdetails a
 set
 src_orderNumber      =b.ordernumber,
@@ -75,7 +75,9 @@ where a.src_ordernumber=b.ordernumber and a.src_productcode=b.productcode;
 ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
+        
         connection.commit()
 
         print(f"Data uploaded to Redshift table orderdetails")

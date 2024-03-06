@@ -37,10 +37,9 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
 WHERE c.dw_customer_id = ch.dw_customer_id 
 AND ch.dw_active_record_ind = 1 
 and ch.creditlimit <> c.creditlimit;
-commit;
+commit;''')
 
-INSERT INTO dev_edw.customer_history
-(
+        copy_command1=(f'''INSERT INTO dev_edw.customer_history(
   dw_customer_id,
   creditLimit,
   effective_from_date,
@@ -67,7 +66,8 @@ commit;
 ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
         connection.commit()
 
         print(f"Data uploaded to Redshift table customers_history")

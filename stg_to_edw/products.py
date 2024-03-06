@@ -40,11 +40,9 @@ set
    etl_batch_no          ='{ETL_BATCH_NO}',
    etl_batch_date        ='{ETL_BATCH_DATE}'
    from dev_stg.products b
-where a.src_productcode=b.productcode ;
+where a.src_productcode=b.productcode ;''')
 
-
-
-
+        copy_command1=(f'''
 insert into dev_edw.products
 (
 src_productCode       ,
@@ -81,8 +79,9 @@ inner join dev_edw.productlines pl on p.productline=pl.productline
 where p1.src_productCode is null;
 ''')
 
+        cursor.execute(copy_command1)
+        connection.commit()
         cursor.execute(copy_command)
-
         connection.commit()
 
         print(f"Data uploaded to Redshift table products")

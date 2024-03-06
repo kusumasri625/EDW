@@ -29,8 +29,9 @@ def connect_to_redshift(host, port, database, user, password,ETL_BATCH_NO,ETL_BA
 
         copy_command= (f'''
 DELETE FROM dev_edw.monthly_customer_summary 
-WHERE start_of_the_month_date >= '{ETL_BATCH_DATE}'::date;
+WHERE start_of_the_month_date >= '{ETL_BATCH_DATE}'::date;''')
 
+        copy_command1=(f'''
 INSERT INTO dev_edw.monthly_customer_summary
 SELECT 
     date_trunc('month', summary_date) AS start_of_the_month_date,
@@ -65,7 +66,8 @@ GROUP BY date_trunc('month', summary_date), dw_customer_id;
 ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
         connection.commit()
 
         print(f"Data uploaded to Redshift table monthly_customer_summary")

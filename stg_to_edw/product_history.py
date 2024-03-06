@@ -34,8 +34,9 @@ dw_update_timestamp= current_timestamp
 from dev_edw.products c
 WHERE c1.dw_product_id = c.dw_product_id 
 and c1.dw_active_record_ind=1 
-and c1.msrp <> c.msrp;
+and c1.msrp <> c.msrp;''')
 
+        copy_command1=(f'''
 insert into dev_edw.product_history(
 dw_product_id,
 MSRP,
@@ -56,7 +57,8 @@ WHERE c1.dw_product_id IS NULL
 ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
         connection.commit()
 
         print(f"Data uploaded to Redshift table product_history")

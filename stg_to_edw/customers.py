@@ -68,32 +68,33 @@ SELECT
 , '{ETL_BATCH_DATE}'
 FROM dev_stg.customers c left join dev_edw.customers c1 on c.customerNumber=c1.src_customerNumber
 left join dev_edw.employees e on c.salesrepemployeenumber=e.employeenumber
-where c1.src_customerNumber is null;
-  
-UPDATE dev_edw.customers a
-SET src_customerNumber     =b.CUSTOMERNUMBER,
-   customerName           =b.CUSTOMERNAME,
-   contactLastName        =b.CONTACTLASTNAME,
-   contactFirstName       =b.CONTACTFIRSTNAME,
-   phone                  =b.PHONE,
-   addressLine1           =b.ADDRESSLINE1,
-   addressLine2           =b.ADDRESSLINE2,
-   city                   =b.CITY,
-   state                  =b.STATE,
-   postalCode             =b.POSTALCODE,
-   country                =b.COUNTRY,
-   salesRepEmployeeNumber =b.SALESREPEMPLOYEENUMBER,
-   creditLimit            =b.CREDITLIMIT,
-   src_update_timestamp   =b.update_timestamp,
-   dw_update_timestamp    =CURRENT_TIMESTAMP,
-   etl_batch_no           ='{ETL_BATCH_NO}',
-   etl_batch_date         ='{ETL_BATCH_DATE}'
-   from dev_stg.customers b
-where a.src_customerNumber=b.CUSTOMERNUMBER;
-''')
+where c1.src_customerNumber is null;''')
+
+        copy_command1=(f'''UPDATE dev_edw.customers a
+        SET src_customerNumber     =b.CUSTOMERNUMBER,
+        customerName           =b.CUSTOMERNAME,
+        contactLastName        =b.CONTACTLASTNAME,
+        contactFirstName       =b.CONTACTFIRSTNAME,
+        phone                  =b.PHONE,
+        addressLine1           =b.ADDRESSLINE1,
+        addressLine2           =b.ADDRESSLINE2,
+        city                   =b.CITY,
+        state                  =b.STATE,
+        postalCode             =b.POSTALCODE,
+        country                =b.COUNTRY,
+        salesRepEmployeeNumber =b.SALESREPEMPLOYEENUMBER,
+        creditLimit            =b.CREDITLIMIT,
+        src_update_timestamp   =b.update_timestamp,
+        dw_update_timestamp    =CURRENT_TIMESTAMP,
+        etl_batch_no           ='{ETL_BATCH_NO}',
+        etl_batch_date         ='{ETL_BATCH_DATE}'
+        from dev_stg.customers b
+        where a.src_customerNumber=b.CUSTOMERNUMBER;
+        ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
         connection.commit()
 
         print(f"Data uploaded to Redshift table customers")

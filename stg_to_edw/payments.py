@@ -36,9 +36,9 @@ checkNumber         =b.checknumber,
    etl_batch_no          ='{ETL_BATCH_NO}',
    etl_batch_date        ='{ETL_BATCH_DATE}'
    from dev_stg.payments b
-where a.checkNumber=b.checkNumber;
+where a.checkNumber=b.checkNumber;''')
 
-
+        copy_command1=(f'''
 insert into dev_edw.payments
 (
  dw_customer_id        ,
@@ -66,8 +66,9 @@ inner join  dev_edw.customers c on c.src_customernumber=p.customernumber
 where p1.checkNumber is null;
 ''')
 
+        cursor.execute(copy_command1)
+        connection.commit()
         cursor.execute(copy_command)
-
         connection.commit()
 
         print(f"Data uploaded to Redshift table payments")

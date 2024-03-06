@@ -34,9 +34,9 @@ productLine            =b.productline,
    etl_batch_no        ='{ETL_BATCH_NO}',
    etl_batch_date     ='{ETL_BATCH_DATE}'
    from dev_stg.productlines b
-where a.productline=b.productline;
+where a.productline=b.productline;''')
 
-
+        copy_command1=(f'''
 insert into dev_edw.productlines
 (
 productLine           ,
@@ -54,8 +54,9 @@ SELECT
 FROM dev_stg.productlines p left join dev_edw.productlines p1 on p.productLine=p1.productLine
 where p1.productLine is null;''')
 
+        cursor.execute(copy_command1)
+        connection.commit()
         cursor.execute(copy_command)
-
         connection.commit()
 
         print(f"Data uploaded to Redshift table productlines")

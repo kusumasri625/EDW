@@ -56,9 +56,9 @@ SELECT
 , '{ETL_BATCH_NO}'
 , '{ETL_BATCH_DATE}'
 FROM dev_stg.offices A left join dev_edw.offices B ON A.officeCode=B.officeCode
-where B.officeCode IS NULL;
+where B.officeCode IS NULL;''')
 
-
+        copy_command1=(f'''
 UPDATE dev_edw.offices a
 set
 officeCode               =b.OFFICECODE,
@@ -78,7 +78,8 @@ officeCode               =b.OFFICECODE,
 where a.officeCode =b.OFFICECODE ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
         connection.commit()
 
         print(f"Data uploaded to Redshift table offices")

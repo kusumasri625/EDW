@@ -56,8 +56,9 @@ SELECT
 , o.cancelleddate
 FROM dev_stg.orders o left join dev_edw.orders o1 on o.orderNumber=o1.src_orderNumber
 inner join dev_edw.customers c on o.customernumber=c.src_customernumber
-where o1.src_orderNumber is null;
+where o1.src_orderNumber is null;''')
 
+        copy_command1=(f'''
 update dev_edw.orders a
 set 
    orderDate=b.orderdate             ,
@@ -72,12 +73,11 @@ set
    dw_update_timestamp=CURRENT_TIMESTAMP
    from dev_stg.orders b
 where a.src_orderNumber=b.ordernumber;
-
-
 ''')
 
         cursor.execute(copy_command)
-
+        connection.commit()
+        cursor.execute(copy_command1)
         connection.commit()
 
         print(f"Data uploaded to Redshift table orders")

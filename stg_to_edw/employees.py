@@ -57,10 +57,10 @@ SELECT
 ,'{ETL_BATCH_DATE}'
 FROM dev_stg.employees e left join dev_edw.employees e1 on e.employeeNumber=e1.employeeNumber
  inner join dev_edw.offices o on e.officecode=o.officecode
-where e1.employeeNumber is null;
+where e1.employeeNumber is null;''')
 
 
-
+        copy_command1=(f'''
 UPDATE dev_edw.employees a
 SET dw_reporting_employee_id=b.dw_employee_id
 from dev_edw.employees b
@@ -83,10 +83,11 @@ employeeNumber            =b.EMPLOYEENUMBER,
    etl_batch_date         = '{ETL_BATCH_DATE}'
    from dev_stg.employees b
 where a.employeeNumber =b.employeeNumber;
-
 ''')
 
         cursor.execute(copy_command)
+        connection.commit()
+        cursor.execute(copy_command1)
 
         connection.commit()
 
